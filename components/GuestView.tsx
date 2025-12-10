@@ -58,7 +58,7 @@ const GuestView: React.FC = () => {
         <header className="mb-10 text-center flex flex-col items-center">
           {/* Logo replacement - Centered */}
           <div className="mb-8">
-             <img src="/logo.png" alt="Firma" className="h-20 w-auto object-contain mx-auto" />
+             <img src={logoImage}  alt="Firma" className="h-20 w-auto object-contain mx-auto" />
           </div>
           
           {/* Centered Title */}
