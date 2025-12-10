@@ -9,42 +9,47 @@ const FloatingMessage: React.FC<FloatingMessageProps> = ({ message }) => {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    // This creates the "Pop In" animation
-    const timer = setTimeout(() => setVisible(true), 50);
+    const timer = setTimeout(() => setVisible(true), 100);
     return () => clearTimeout(timer);
   }, []);
 
-  // 1. EXTRACT STYLES SENT FROM PHONE
-  // If message.font is empty, default to 'font-syne'
-  const fontClass = message.font || 'font-syne';
+  // --- 🛡️ SAFETY NETS (Fixes the "Broken Position" issue) ---
+  // If X or Y is missing (from old messages), pick a random spot instantly.
+  // This prevents them from stacking in the corner.
+  const safeX = message.x ?? Math.random() * 90 + 5;
+  const safeY = message.y ?? Math.random() * 70 + 15;
   
-  // If message.color is empty, default to 'text-white'
+  const fontClass = message.font || 'font-syne';
   const colorClass = message.color || 'text-white';
+  const rotation = message.rotation || 0;
 
-  // 2. POSITIONING STYLE
   const style = {
-    left: `${message.x}%`,
-    top: `${message.y}%`,
-    transform: `translate(-50%, -50%) rotate(${message.rotation || 0}deg) scale(${visible ? message.scale || 1 : 0})`,
+    left: `${safeX}%`,  // Use the safe variable
+    top: `${safeY}%`,   // Use the safe variable
+    transform: `translate(-50%, -50%) rotate(${rotation}deg) scale(${visible ? message.scale || 1 : 0})`,
     opacity: visible ? 1 : 0,
-    transition: 'transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.5s ease-out',
-    position: 'absolute' as 'absolute',
-    maxWidth: '350px',
+    transition: 'transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.6s ease-out',
+    maxWidth: '300px',
     width: 'max-content',
-    zIndex: Math.floor(Math.random() * 50)
+    position: 'absolute' as 'absolute',
+    zIndex: Math.floor(Math.random() * 10),
+    whiteSpace: 'pre-wrap' as 'pre-wrap', // Ensures text wraps if too long
+    textAlign: 'center' as 'center'
   };
 
   return (
     <div 
       style={style}
-      // 3. APPLY THE CLASSES HERE
-      className={`absolute text-4xl md:text-6xl font-bold leading-tight drop-shadow-lg text-center pointer-events-none select-none ${fontClass} ${colorClass}`}
+      className={`
+        absolute text-3xl md:text-5xl font-bold leading-tight drop-shadow-lg text-center pointer-events-none select-none
+        ${fontClass} 
+        ${colorClass}
+      `}
     >
       {message.text}
       
-      {/* Optional Author Name */}
       {message.author && message.author !== 'Guest' && (
-        <div className="text-sm md:text-base mt-2 opacity-90 font-sans text-white tracking-widest uppercase">
+        <div className="text-sm md:text-base mt-1 opacity-80 font-sans text-white tracking-widest uppercase">
           - {message.author}
         </div>
       )}
