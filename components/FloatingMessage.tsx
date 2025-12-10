@@ -1,60 +1,93 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState, forwardRef } from 'react';
 import { Message } from '../types';
+
+export type LineMode = 'compact' | 'full';
 
 interface FloatingMessageProps {
   message: Message;
+  style?: React.CSSProperties;
+  lineMode?: LineMode;
 }
 
-const FloatingMessage: React.FC<FloatingMessageProps> = ({ message }) => {
-  const [visible, setVisible] = useState(false);
+const FloatingMessage = forwardRef<HTMLDivElement, FloatingMessageProps>(({ 
+  message, 
+  style,
+  lineMode = 'compact'
+}, ref) => {
+  const [displayedText, setDisplayedText] = useState('');
+  const [isTyping, setIsTyping] = useState(true);
 
+  // Typewriter Effect
   useEffect(() => {
-    const timer = setTimeout(() => setVisible(true), 100);
-    return () => clearTimeout(timer);
-  }, []);
+    let currentIndex = 0;
+    const fullText = message.text;
+    // Faster typing for longer texts
+    const baseSpeed = 40;
+    const typingSpeed = Math.max(10, baseSpeed - (fullText.length * 0.2)) + Math.random() * 20; 
 
-  // --- 🛡️ SAFETY NETS (Fixes the "Broken Position" issue) ---
-  // If X or Y is missing (from old messages), pick a random spot instantly.
-  // This prevents them from stacking in the corner.
-  const safeX = message.x ?? Math.random() * 90 + 5;
-  const safeY = message.y ?? Math.random() * 70 + 15;
-  
-  const fontClass = message.font || 'font-syne';
-  const colorClass = message.color || 'text-white';
-  const rotation = message.rotation || 0;
+    const interval = setInterval(() => {
+      if (currentIndex <= fullText.length) {
+        setDisplayedText(fullText.slice(0, currentIndex));
+        currentIndex++;
+      } else {
+        clearInterval(interval);
+        setTimeout(() => setIsTyping(false), 3000);
+      }
+    }, typingSpeed);
 
-  const style = {
-    left: `${safeX}%`,  // Use the safe variable
-    top: `${safeY}%`,   // Use the safe variable
-    transform: `translate(-50%, -50%) rotate(${rotation}deg) scale(${visible ? message.scale || 1 : 0})`,
-    opacity: visible ? 1 : 0,
-    transition: 'transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.6s ease-out',
-    maxWidth: '300px',
+    return () => clearInterval(interval);
+  }, [message.text]);
+
+  // Dynamic Styles based on Line Mode
+  const containerStyle: React.CSSProperties = {
+    maxWidth: lineMode === 'full' ? '90vw' : '25em', // Compact: wider to allow ~2-3 words/line. Full: almost screen width.
     width: 'max-content',
-    position: 'absolute' as 'absolute',
-    zIndex: Math.floor(Math.random() * 10),
-    whiteSpace: 'pre-wrap' as 'pre-wrap', // Ensures text wraps if too long
-    textAlign: 'center' as 'center'
+    textAlign: 'center',
+    lineHeight: 1.1,
+    textShadow: '0 4px 12px rgba(0,0,0,0.5)',
+    animation: `float-idle ${message.animationDuration || 8}s ease-in-out infinite alternate`,
+  };
+
+  const textStyle: React.CSSProperties = {
+    whiteSpace: lineMode === 'full' ? 'nowrap' : 'pre-wrap',
+    // In compact mode, we ensure it doesn't get TOO wide if it's a paragraph
+    maxWidth: lineMode === 'full' ? 'none' : '30vw', 
+    minWidth: lineMode === 'full' ? 'auto' : '200px', // Prevent squashing to 1 word
   };
 
   return (
-    <div 
-      style={style}
-      className={`
-        absolute text-3xl md:text-5xl font-bold leading-tight drop-shadow-lg text-center pointer-events-none select-none
-        ${fontClass} 
-        ${colorClass}
-      `}
+    <div
+      ref={ref}
+      className={`absolute select-none will-change-transform`}
+      style={{
+        ...style,
+        zIndex: 10,
+        transformOrigin: 'center center',
+      }}
     >
-      {message.text}
-      
-      {message.author && message.author !== 'Guest' && (
-        <div className="text-sm md:text-base mt-1 opacity-80 font-sans text-white tracking-widest uppercase">
-          - {message.author}
+      <div 
+        className={`${message.font || 'font-syne'} ${message.color || 'text-white'}`}
+        style={containerStyle}
+      >
+        <div 
+          dir="auto"
+          className={`text-3xl md:text-5xl transition-opacity duration-300 ${isTyping ? 'cursor-blink' : ''}`}
+          style={textStyle}
+        >
+          {displayedText}
         </div>
-      )}
+        
+        {/* Author Display */}
+        {message.author && message.author !== 'Guest' && !isTyping && (
+          <div className="mt-2 text-sm md:text-base font-grotesk tracking-widest opacity-60 uppercase text-center w-full">
+            - {message.author}
+          </div>
+        )}
+      </div>
     </div>
   );
-};
+});
+
+FloatingMessage.displayName = 'FloatingMessage';
 
 export default FloatingMessage;
