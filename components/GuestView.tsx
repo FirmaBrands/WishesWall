@@ -8,7 +8,7 @@ const GuestView: React.FC = () => {
   const [sent, setSent] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
 
-  // 🔴 YOUR URL IS PRESERVED HERE
+  // 🔴 PASTE YOUR GOOGLE SCRIPT URL HERE (Starts with https://script.google.com/...)
   const FALLBACK_URL = "https://script.google.com/macros/s/AKfycbx63gOFl6eifs0nvYnMsgpXdCJ9xspFQq9765fUUW8y2SC_p6P7uNuYKk1CCn-h3nWO/exec"; 
 
   useEffect(() => {
@@ -30,39 +30,44 @@ const GuestView: React.FC = () => {
     setIsSending(true);
 
     try {
+      // 🟢 THIS IS THE PART WE BROUGHT "OUT" OF HIDING
+      // Now we can control the design!
       const newMessage = {
         id: crypto.randomUUID(),
         text: text.trim(),
         author: author.trim() || 'Guest',
         timestamp: Date.now(),
         
-        // --- SPREAD LOGIC (This was already correct in your file!) ---
+        // 1. WIDE SPREAD LOGIC (95% Width)
         x: Math.random() * 95 + 2.5, 
         y: Math.random() * 70 + 15,
-        // -----------------------------------------------------------
         
-        // --- COLOR FIX: Changed from Hex Codes to Class Names ---
+        // 2. COLOR LOGIC (Using the Class Names from your index.html)
         color: [
-          'text-firma-pink', 
-          'text-firma-teal', 
+          'text-party-pink', 
           'text-party-lime', 
+          'text-party-purple', 
+          'text-party-teal',
+          'text-party-orange',
           'text-white'
-        ][Math.floor(Math.random() * 4)],
-        // -------------------------------------------------------
+        ][Math.floor(Math.random() * 6)],
 
-        font: ['font-syne', 'font-grotesk', 'font-anton', 'font-marker'][Math.floor(Math.random() * 4)],
+        // 3. FONT LOGIC (Using the Fonts from your index.html)
+        font: [
+          'font-syne', 
+          'font-grotesk', 
+          'font-anton', 
+          'font-marker', 
+          'font-bebas'
+        ][Math.floor(Math.random() * 5)],
+
         rotation: Math.random() * 20 - 10,
         scale: 1,
       };
 
+      // Send to Google Sheets
       const targetUrl = getApiUrl() || FALLBACK_URL;
-
-      if (!targetUrl) {
-        alert("Please set the Google Script URL.");
-        setIsSending(false);
-        return;
-      }
-
+      
       await fetch(targetUrl, {
         method: 'POST',
         mode: 'no-cors',
@@ -70,14 +75,14 @@ const GuestView: React.FC = () => {
         body: JSON.stringify({ action: 'add', message: newMessage }),
       });
 
+      setIsSending(false);
       setSent(true);
       setText('');
       setAuthor('');
     } catch (error) {
       console.error("Error sending:", error);
-      alert("Failed to send.");
-    } finally {
       setIsSending(false);
+      // Optional: Add error handling here
     }
   };
 
@@ -101,6 +106,8 @@ const GuestView: React.FC = () => {
       <div className="flex-1 flex flex-col justify-center max-w-lg mx-auto w-full relative z-10">
         
         <header className="mb-10 text-center flex flex-col items-center">
+          
+          {/* SAFE LOGO LOAD */}
           <div className="mb-8">
              <img 
                src="/WishesWall/logo.png"
