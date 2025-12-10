@@ -1,3 +1,4 @@
+import logoImage from '../logo.png'; // (Adjust path to match where your file is)
 import React, { useEffect, useState, useRef } from 'react';
 import { Message } from '../types';
 import { fetchMessages, subscribeToMessages, clearMessages, subscribeToReset, getApiUrl, setApiUrl } from '../services/messageService';
