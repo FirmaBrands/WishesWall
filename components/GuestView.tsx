@@ -8,11 +8,10 @@ const GuestView: React.FC = () => {
   const [sent, setSent] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
 
-  // 🔴 PASTE YOUR GOOGLE SCRIPT URL HERE (Starts with https://script.google.com/...)
+  // 🔴 PASTE YOUR GOOGLE SCRIPT URL HERE
   const FALLBACK_URL = "https://script.google.com/macros/s/AKfycbx63gOFl6eifs0nvYnMsgpXdCJ9xspFQq9765fUUW8y2SC_p6P7uNuYKk1CCn-h3nWO/exec"; 
 
   useEffect(() => {
-    // Check for API URL in URL params (from QR code)
     const params = new URLSearchParams(window.location.search);
     const apiUrlFromQr = params.get('apiUrl');
     
@@ -31,35 +30,48 @@ const GuestView: React.FC = () => {
     setIsSending(true);
 
     try {
-      // 1. Create the full message object HERE so we can control the position
       const newMessage = {
         id: crypto.randomUUID(),
         text: text.trim(),
         author: author.trim() || 'Guest',
         timestamp: Date.now(),
         
-        // --- 🟢 WIDE CLOUD LOGIC ---
-        // 95 means "95% of screen width". 2.5 means "Start 2.5% from the left".
+        // --- 1. SPREAD LOGIC (Wide Cloud) ---
         x: Math.random() * 95 + 2.5, 
         y: Math.random() * 70 + 15,
-        // ---------------------------
         
-        color: ['#FF0055', '#008F7A', '#FFD700', '#FFFFFF'][Math.floor(Math.random() * 4)],
-        font: ['font-syne', 'font-grotesk', 'font-anton', 'font-marker'][Math.floor(Math.random() * 4)],
+        // --- 2. COLOR FIX (Using Class Names, NOT Hex Codes) ---
+        // These match the definitions in your index.html
+        color: [
+          'text-firma-pink', 
+          'text-firma-teal', 
+          'text-party-lime', 
+          'text-party-purple', 
+          'text-party-orange',
+          'text-white'
+        ][Math.floor(Math.random() * 6)],
+
+        // --- 3. FONT FIX ---
+        font: [
+          'font-syne', 
+          'font-grotesk', 
+          'font-anton', 
+          'font-marker', 
+          'font-bebas'
+        ][Math.floor(Math.random() * 5)],
+
         rotation: Math.random() * 20 - 10,
-        scale: 1,
+        scale: Math.random() * 0.5 + 0.8, // Slight size variation
       };
 
-      // 2. Determine which URL to use
       const targetUrl = getApiUrl() || FALLBACK_URL;
 
       if (!targetUrl || targetUrl.includes("YOUR_GOOGLE_SCRIPT")) {
-        alert("Please set the Google Script URL in the code or scan the QR code.");
+        alert("Please set the Google Script URL in the code.");
         setIsSending(false);
         return;
       }
 
-      // 3. Send directly to Google Sheets
       await fetch(targetUrl, {
         method: 'POST',
         mode: 'no-cors',
@@ -72,7 +84,7 @@ const GuestView: React.FC = () => {
       setAuthor('');
     } catch (error) {
       console.error("Error sending:", error);
-      alert("Failed to send. Check console.");
+      alert("Failed to send.");
     } finally {
       setIsSending(false);
     }
@@ -80,11 +92,10 @@ const GuestView: React.FC = () => {
 
   if (sent) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-8 bg-firma-dark text-center animate-fade-in relative overflow-hidden">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60vw] h-[60vw] bg-firma-pink/20 rounded-full blur-[80px]"></div>
-        <h2 className="text-6xl font-syne font-extrabold text-white mb-6 relative z-10">Sent!</h2>
-        <p className="font-grotesk text-gray-400 mb-8 relative z-10">Your message is now on the wall.</p>
-        <button onClick={() => setSent(false)} className="px-8 py-4 bg-firma-pink text-white font-syne font-bold text-sm uppercase tracking-widest hover:bg-white hover:text-firma-pink transition-all relative z-10 rounded-lg">
+      <div className="min-h-screen flex flex-col items-center justify-center p-8 bg-black text-center animate-fade-in relative overflow-hidden">
+        <h2 className="text-6xl font-bold text-white mb-6 relative z-10">Sent!</h2>
+        <p className="text-gray-400 mb-8 relative z-10">Your message is on the wall.</p>
+        <button onClick={() => setSent(false)} className="px-8 py-4 bg-pink-600 text-white font-bold uppercase hover:bg-white hover:text-pink-600 transition-all rounded-lg z-10">
           Send Another
         </button>
       </div>
@@ -92,11 +103,10 @@ const GuestView: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col p-8 bg-firma-dark text-white relative overflow-hidden">
-      <div className="absolute top-[-100px] right-[-100px] w-[200px] h-[200px] bg-firma-pink rounded-full blur-[60px] opacity-40"></div>
+    <div className="min-h-screen flex flex-col p-8 bg-black text-white relative overflow-hidden">
+      <div className="absolute top-[-100px] right-[-100px] w-[200px] h-[200px] bg-pink-600 rounded-full blur-[60px] opacity-40"></div>
 
       <div className="flex-1 flex flex-col justify-center max-w-lg mx-auto w-full relative z-10">
-        
         <header className="mb-10 text-center flex flex-col items-center">
           <div className="mb-8">
              <img 
@@ -106,20 +116,10 @@ const GuestView: React.FC = () => {
                onError={(e) => { e.currentTarget.style.display = 'none'; }} 
              />
           </div>
-          
-          <h1 className="text-4xl md:text-5xl font-syne font-extrabold leading-none tracking-tight mb-2 uppercase">
-            Send a <span className="text-firma-pink">Wish.</span>
+          <h1 className="text-4xl md:text-5xl font-extrabold leading-none tracking-tight mb-2 uppercase">
+            Send a <span className="text-pink-600">Wish.</span>
           </h1>
-          <p className="text-sm font-grotesk text-gray-400 mt-2">
-            Leave a message for the birthday celebration.
-          </p>
-          
-          {!isConnected && !FALLBACK_URL && (
-            <div className="mt-6 p-4 bg-gray-800 border-l-4 border-yellow-500 text-gray-300 text-xs font-mono rounded-r-lg text-left">
-              <strong className="text-yellow-500 block mb-1">⚠ Offline Mode</strong>
-              Messages will not save to the screen.
-            </div>
-          )}
+          <p className="text-sm text-gray-400 mt-2">Leave a message for the birthday celebration.</p>
         </header>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -128,12 +128,11 @@ const GuestView: React.FC = () => {
               value={text}
               onChange={(e) => setText(e.target.value.slice(0, 50))}
               placeholder="Write your message..."
-              dir="auto"
-              className="w-full h-32 bg-transparent border-2 border-gray-700 focus:border-firma-pink p-4 text-2xl font-syne font-bold text-white placeholder-gray-700 focus:outline-none transition-colors resize-none rounded-xl"
+              className="w-full h-32 bg-transparent border-2 border-gray-700 focus:border-pink-600 p-4 text-2xl font-bold text-white placeholder-gray-700 focus:outline-none transition-colors resize-none rounded-xl"
             />
             <div className="flex justify-between mt-2 px-1">
-               <span className="text-xs font-mono text-gray-600 uppercase">Max 50 chars</span>
-               <span className={`text-xs font-mono ${text.length >= 45 ? 'text-firma-pink' : 'text-gray-600'}`}>{text.length} / 50</span>
+               <span className="text-xs text-gray-600 uppercase">Max 50 chars</span>
+               <span className={`text-xs ${text.length >= 45 ? 'text-pink-600' : 'text-gray-600'}`}>{text.length} / 50</span>
             </div>
           </div>
 
@@ -143,12 +142,11 @@ const GuestView: React.FC = () => {
                 value={author}
                 onChange={(e) => setAuthor(e.target.value.slice(0, 20))}
                 placeholder="From: (Optional)"
-                dir="auto"
-                className="w-full bg-transparent border-2 border-gray-700 focus:border-firma-pink p-4 text-lg font-grotesk text-white placeholder-gray-700 focus:outline-none transition-colors rounded-xl"
+                className="w-full bg-transparent border-2 border-gray-700 focus:border-pink-600 p-4 text-lg text-white placeholder-gray-700 focus:outline-none transition-colors rounded-xl"
              />
           </div>
 
-          <button type="submit" disabled={!text || isSending} className="w-full py-5 mt-4 bg-white text-black font-syne font-black text-lg uppercase tracking-widest hover:bg-firma-pink hover:text-white disabled:opacity-30 disabled:hover:bg-white disabled:hover:text-black transition-all rounded-xl shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:shadow-[0_0_30px_rgba(255,0,85,0.4)]">
+          <button type="submit" disabled={!text || isSending} className="w-full py-5 mt-4 bg-white text-black font-black text-lg uppercase tracking-widest hover:bg-pink-600 hover:text-white disabled:opacity-30 transition-all rounded-xl">
             {isSending ? 'Sending...' : 'Send Wish'}
           </button>
         </form>
