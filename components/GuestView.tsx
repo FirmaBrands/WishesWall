@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { setApiUrl, getApiUrl } from '../services/messageService';
+import { saveMessage, setApiUrl, getApiUrl } from '../services/messageService';
 
 const GuestView: React.FC = () => {
   const [text, setText] = useState('');
@@ -8,10 +8,8 @@ const GuestView: React.FC = () => {
   const [sent, setSent] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
 
-  // 🔴 PASTE YOUR GOOGLE SCRIPT URL HERE (Starts with https://script.google.com/...)
-  const FALLBACK_URL = "https://script.google.com/macros/s/AKfycbx63gOFl6eifs0nvYnMsgpXdCJ9xspFQq9765fUUW8y2SC_p6P7uNuYKk1CCn-h3nWO/exec"; 
-
   useEffect(() => {
+    // Check for API URL in URL params
     const params = new URLSearchParams(window.location.search);
     const apiUrlFromQr = params.get('apiUrl');
     
@@ -20,7 +18,7 @@ const GuestView: React.FC = () => {
       window.history.replaceState({}, '', window.location.pathname + '#/');
     }
 
-    setIsConnected(!!getApiUrl() || !!FALLBACK_URL);
+    setIsConnected(!!getApiUrl());
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -28,62 +26,11 @@ const GuestView: React.FC = () => {
     if (!text.trim()) return;
 
     setIsSending(true);
-
-    try {
-      // 🟢 THIS IS THE PART WE BROUGHT "OUT" OF HIDING
-      // Now we can control the design!
-      const newMessage = {
-        id: crypto.randomUUID(),
-        text: text.trim(),
-        author: author.trim() || 'Guest',
-        timestamp: Date.now(),
-        
-        // 1. WIDE SPREAD LOGIC (95% Width)
-        x: Math.random() * 95 + 2.5, 
-        y: Math.random() * 70 + 15,
-        
-        // 2. COLOR LOGIC (Using the Class Names from your index.html)
-        color: [
-          'text-party-pink', 
-          'text-party-lime', 
-          'text-party-purple', 
-          'text-party-teal',
-          'text-party-orange',
-          'text-white'
-        ][Math.floor(Math.random() * 6)],
-
-        // 3. FONT LOGIC (Using the Fonts from your index.html)
-        font: [
-          'font-syne', 
-          'font-grotesk', 
-          'font-anton', 
-          'font-marker', 
-          'font-bebas'
-        ][Math.floor(Math.random() * 5)],
-
-        rotation: Math.random() * 20 - 10,
-        scale: 1,
-      };
-
-      // Send to Google Sheets
-      const targetUrl = getApiUrl() || FALLBACK_URL;
-      
-      await fetch(targetUrl, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'add', message: newMessage }),
-      });
-
-      setIsSending(false);
-      setSent(true);
-      setText('');
-      setAuthor('');
-    } catch (error) {
-      console.error("Error sending:", error);
-      setIsSending(false);
-      // Optional: Add error handling here
-    }
+    await saveMessage(text.trim(), author.trim() || undefined);
+    setIsSending(false);
+    setSent(true);
+    setText('');
+    setAuthor('');
   };
 
   if (sent) {
@@ -107,7 +54,8 @@ const GuestView: React.FC = () => {
         
         <header className="mb-10 text-center flex flex-col items-center">
           
-          {/* SAFE LOGO LOAD */}
+          {/* --- FIXED LOGO SECTION --- */}
+          {/* This now looks for the file in your 'public' folder */}
           <div className="mb-8">
              <img 
                src="/WishesWall/logo.png"
@@ -116,6 +64,7 @@ const GuestView: React.FC = () => {
                onError={(e) => { e.currentTarget.style.display = 'none'; }} 
              />
           </div>
+          {/* --------------------------- */}
           
           <h1 className="text-4xl md:text-5xl font-syne font-extrabold leading-none tracking-tight mb-2 uppercase">
             Send a <span className="text-firma-pink">Wish.</span>
@@ -124,10 +73,10 @@ const GuestView: React.FC = () => {
             Leave a message for the birthday celebration.
           </p>
           
-          {!isConnected && !FALLBACK_URL && (
+          {!isConnected && (
             <div className="mt-6 p-4 bg-gray-800 border-l-4 border-yellow-500 text-gray-300 text-xs font-mono rounded-r-lg text-left">
               <strong className="text-yellow-500 block mb-1">⚠ Offline Mode</strong>
-              Messages will not save to the screen.
+              Messages will only be saved on this device. Scan the QR code on the main screen to connect to the live wall.
             </div>
           )}
         </header>
