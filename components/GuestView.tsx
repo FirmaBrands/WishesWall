@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { saveMessage, setApiUrl, getApiUrl } from '../services/messageService';
+import { setApiUrl, getApiUrl } from '../services/messageService';
 
 const GuestView: React.FC = () => {
   const [text, setText] = useState('');
@@ -8,8 +8,11 @@ const GuestView: React.FC = () => {
   const [sent, setSent] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
 
+  // 🔴 PASTE YOUR GOOGLE SCRIPT URL HERE (Starts with https://script.google.com/...)
+  const FALLBACK_URL = "https://script.google.com/macros/s/AKfycbx63gOFl6eifs0nvYnMsgpXdCJ9xspFQq9765fUUW8y2SC_p6P7uNuYKk1CCn-h3nWO/exec"; 
+
   useEffect(() => {
-    // Check for API URL in URL params
+    // Check for API URL in URL params (from QR code)
     const params = new URLSearchParams(window.location.search);
     const apiUrlFromQr = params.get('apiUrl');
     
@@ -18,7 +21,7 @@ const GuestView: React.FC = () => {
       window.history.replaceState({}, '', window.location.pathname + '#/');
     }
 
-    setIsConnected(!!getApiUrl());
+    setIsConnected(!!getApiUrl() || !!FALLBACK_URL);
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -26,11 +29,53 @@ const GuestView: React.FC = () => {
     if (!text.trim()) return;
 
     setIsSending(true);
-    await saveMessage(text.trim(), author.trim() || undefined);
-    setIsSending(false);
-    setSent(true);
-    setText('');
-    setAuthor('');
+
+    try {
+      // 1. Create the full message object HERE so we can control the position
+      const newMessage = {
+        id: crypto.randomUUID(),
+        text: text.trim(),
+        author: author.trim() || 'Guest',
+        timestamp: Date.now(),
+        
+        // --- 🟢 WIDE CLOUD LOGIC ---
+        // 95 means "95% of screen width". 2.5 means "Start 2.5% from the left".
+        x: Math.random() * 95 + 2.5, 
+        y: Math.random() * 70 + 15,
+        // ---------------------------
+        
+        color: ['#FF0055', '#008F7A', '#FFD700', '#FFFFFF'][Math.floor(Math.random() * 4)],
+        font: ['font-syne', 'font-grotesk', 'font-anton', 'font-marker'][Math.floor(Math.random() * 4)],
+        rotation: Math.random() * 20 - 10,
+        scale: 1,
+      };
+
+      // 2. Determine which URL to use
+      const targetUrl = getApiUrl() || FALLBACK_URL;
+
+      if (!targetUrl || targetUrl.includes("YOUR_GOOGLE_SCRIPT")) {
+        alert("Please set the Google Script URL in the code or scan the QR code.");
+        setIsSending(false);
+        return;
+      }
+
+      // 3. Send directly to Google Sheets
+      await fetch(targetUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'add', message: newMessage }),
+      });
+
+      setSent(true);
+      setText('');
+      setAuthor('');
+    } catch (error) {
+      console.error("Error sending:", error);
+      alert("Failed to send. Check console.");
+    } finally {
+      setIsSending(false);
+    }
   };
 
   if (sent) {
@@ -53,9 +98,6 @@ const GuestView: React.FC = () => {
       <div className="flex-1 flex flex-col justify-center max-w-lg mx-auto w-full relative z-10">
         
         <header className="mb-10 text-center flex flex-col items-center">
-          
-          {/* --- FIXED LOGO SECTION --- */}
-          {/* This now looks for the file in your 'public' folder */}
           <div className="mb-8">
              <img 
                src="/WishesWall/logo.png"
@@ -64,7 +106,6 @@ const GuestView: React.FC = () => {
                onError={(e) => { e.currentTarget.style.display = 'none'; }} 
              />
           </div>
-          {/* --------------------------- */}
           
           <h1 className="text-4xl md:text-5xl font-syne font-extrabold leading-none tracking-tight mb-2 uppercase">
             Send a <span className="text-firma-pink">Wish.</span>
@@ -73,10 +114,10 @@ const GuestView: React.FC = () => {
             Leave a message for the birthday celebration.
           </p>
           
-          {!isConnected && (
+          {!isConnected && !FALLBACK_URL && (
             <div className="mt-6 p-4 bg-gray-800 border-l-4 border-yellow-500 text-gray-300 text-xs font-mono rounded-r-lg text-left">
               <strong className="text-yellow-500 block mb-1">⚠ Offline Mode</strong>
-              Messages will only be saved on this device. Scan the QR code on the main screen to connect to the live wall.
+              Messages will not save to the screen.
             </div>
           )}
         </header>
