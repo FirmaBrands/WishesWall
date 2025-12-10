@@ -298,7 +298,7 @@ const DisplayView: React.FC = () => {
       {/* Brand Header */}
       <div className="absolute top-8 left-8 z-50 pointer-events-none">
          <div className="flex items-center gap-3">
-            <img src="/logo.png" alt="Firma" className="h-12 w-auto object-contain" />
+            <img src={logoImage} alt="Firma" className="h-12 w-auto object-contain" />
             {/* Firma text removed as requested */}
          </div>
       </div>
