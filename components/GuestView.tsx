@@ -9,13 +9,12 @@ const GuestView: React.FC = () => {
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    // Check for API URL in URL params (from QR code)
+    // Check for API URL in URL params
     const params = new URLSearchParams(window.location.search);
     const apiUrlFromQr = params.get('apiUrl');
     
     if (apiUrlFromQr) {
       setApiUrl(apiUrlFromQr);
-      // Clean URL so the user doesn't see the ugly token
       window.history.replaceState({}, '', window.location.pathname + '#/');
     }
 
@@ -27,7 +26,6 @@ const GuestView: React.FC = () => {
     if (!text.trim()) return;
 
     setIsSending(true);
-    // Send both text and author
     await saveMessage(text.trim(), author.trim() || undefined);
     setIsSending(false);
     setSent(true);
@@ -55,7 +53,9 @@ const GuestView: React.FC = () => {
       <div className="flex-1 flex flex-col justify-center max-w-lg mx-auto w-full relative z-10">
         
         <header className="mb-10 text-center flex flex-col items-center">
-          {/* FIXED IMAGE SECTION */}
+          
+          {/* --- FIXED LOGO SECTION --- */}
+          {/* This now looks for the file in your 'public' folder */}
           <div className="mb-8">
              <img 
                src="/WishesWall/logo.png"
@@ -64,6 +64,7 @@ const GuestView: React.FC = () => {
                onError={(e) => { e.currentTarget.style.display = 'none'; }} 
              />
           </div>
+          {/* --------------------------- */}
           
           <h1 className="text-4xl md:text-5xl font-syne font-extrabold leading-none tracking-tight mb-2 uppercase">
             Send a <span className="text-firma-pink">Wish.</span>
@@ -89,4 +90,30 @@ const GuestView: React.FC = () => {
               dir="auto"
               className="w-full h-32 bg-transparent border-2 border-gray-700 focus:border-firma-pink p-4 text-2xl font-syne font-bold text-white placeholder-gray-700 focus:outline-none transition-colors resize-none rounded-xl"
             />
-            <div className="flex justify-
+            <div className="flex justify-between mt-2 px-1">
+               <span className="text-xs font-mono text-gray-600 uppercase">Max 50 chars</span>
+               <span className={`text-xs font-mono ${text.length >= 45 ? 'text-firma-pink' : 'text-gray-600'}`}>{text.length} / 50</span>
+            </div>
+          </div>
+
+          <div className="relative">
+             <input
+                type="text"
+                value={author}
+                onChange={(e) => setAuthor(e.target.value.slice(0, 20))}
+                placeholder="From: (Optional)"
+                dir="auto"
+                className="w-full bg-transparent border-2 border-gray-700 focus:border-firma-pink p-4 text-lg font-grotesk text-white placeholder-gray-700 focus:outline-none transition-colors rounded-xl"
+             />
+          </div>
+
+          <button type="submit" disabled={!text || isSending} className="w-full py-5 mt-4 bg-white text-black font-syne font-black text-lg uppercase tracking-widest hover:bg-firma-pink hover:text-white disabled:opacity-30 disabled:hover:bg-white disabled:hover:text-black transition-all rounded-xl shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:shadow-[0_0_30px_rgba(255,0,85,0.4)]">
+            {isSending ? 'Sending...' : 'Send Wish'}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+export default GuestView;
