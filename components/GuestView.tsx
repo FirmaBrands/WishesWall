@@ -1,117 +1,92 @@
-import React, { useState } from 'react';
-import { Message } from '../types';
+import React, { useState, useEffect } from 'react';
+import { saveMessage, setApiUrl, getApiUrl } from '../services/messageService';
 
-// IMPORTANT: Ensure this path matches your actual logo file location!
-// If your logo is in public/WishesWall/logo.png, you might need to use that string in the src="" below instead of importing.
-import logo from '../assets/logo.png'; 
-
-export default function GuestView() {
+const GuestView: React.FC = () => {
   const [text, setText] = useState('');
   const [author, setAuthor] = useState('');
-  const [sending, setSending] = useState(false);
-  const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [isSending, setIsSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
 
-  // REPLACE THIS WITH YOUR GOOGLE SCRIPT URL
-  const API_URL = "https://script.google.com/macros/s/AKfycby.../exec"; 
+  useEffect(() => {
+    // Check for API URL in URL params (from QR code)
+    const params = new URLSearchParams(window.location.search);
+    const apiUrlFromQr = params.get('apiUrl');
+    
+    if (apiUrlFromQr) {
+      setApiUrl(apiUrlFromQr);
+      // Clean URL so the user doesn't see the ugly token
+      window.history.replaceState({}, '', window.location.pathname + '#/');
+    }
+
+    setIsConnected(!!getApiUrl());
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!text.trim()) return;
-    
-    setSending(true);
-    setStatus('idle');
 
-    try {
-      const newMessage = {
-        id: crypto.randomUUID(),
-        text: text,
-        author: author || 'Guest',
-        timestamp: Date.now(),
-        // Visuals
-        x: Math.random() * 80 + 10,
-        y: Math.random() * 80 + 10,
-        color: ['#FF0055', '#008F7A', '#FFD700', '#FFFFFF'][Math.floor(Math.random() * 4)],
-        font: ['font-syne', 'font-grotesk', 'font-anton', 'font-marker'][Math.floor(Math.random() * 4)],
-        rotation: Math.random() * 20 - 10,
-        scale: 1,
-      };
-
-      await fetch(API_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'add', message: newMessage }),
-      });
-
-      setStatus('success');
-      setText('');
-      setAuthor('');
-      setTimeout(() => setStatus('idle'), 3000);
-    } catch (error) {
-      console.error('Error sending:', error);
-      setStatus('error');
-    } finally {
-      setSending(false);
-    }
+    setIsSending(true);
+    // Send both text and author
+    await saveMessage(text.trim(), author.trim() || undefined);
+    setIsSending(false);
+    setSent(true);
+    setText('');
+    setAuthor('');
   };
 
-  return (
-    <div className="min-h-screen bg-firma-dark text-white flex flex-col items-center justify-center p-6 relative overflow-hidden">
-      
-      {/* BACKGROUND SHAPES */}
-      <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-firma-pink/20 rounded-full blur-[100px] animate-blob" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-firma-teal/20 rounded-full blur-[100px] animate-blob animation-delay-2000" />
-
-      <div className="relative z-10 w-full max-w-md flex flex-col items-center">
-        
-        {/* LOGO SECTION - FIXED SIZE HERE */}
-        {/* We use w-1/2 for 50% width, and mx-auto to center it */}
-        <img 
-          src={logo} 
-          alt="Event Logo" 
-          className="w-1/2 h-auto mb-8 mx-auto drop-shadow-2xl"
-        />
-
-        <div className="w-full backdrop-blur-md bg-white/5 border border-white/10 p-8 rounded-3xl shadow-2xl">
-          <h1 className="text-3xl font-syne font-bold text-center mb-2 bg-gradient-to-r from-firma-pink to-white bg-clip-text text-transparent">
-            Make a Wish
-          </h1>
-          <p className="text-center text-gray-400 mb-8 font-grotesk text-sm">
-            Share your message for the big screen.
-          </p>
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-widest text-firma-pink mb-2 ml-1">
-                Your Message
-              </label>
-              <textarea
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                maxLength={50}
-                placeholder="Type something amazing..."
-                className="w-full bg-black/40 border-2 border-white/10 rounded-xl p-4 text-lg font-medium focus:border-firma-pink focus:outline-none focus:ring-4 focus:ring-firma-pink/20 transition-all resize-none placeholder-gray-600"
-                rows={3}
-              />
-              <div className="text-right text-xs text-gray-500 mt-2">
-                {text.length}/50
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={sending || !text}
-              className={`w-full py-4 rounded-xl font-bold text-lg tracking-wide transition-all transform active:scale-95 ${
-                status === 'success'
-                  ? 'bg-green-500 text-white'
-                  : 'bg-firma-pink text-white hover:shadow-[0_0_30px_rgba(255,0,85,0.4)]'
-              } disabled:opacity-50 disabled:cursor-not-allowed`}
-            >
-              {sending ? 'Sending...' : status === 'success' ? 'Sent!' : 'SEND WISH'}
-            </button>
-          </form>
-        </div>
+  if (sent) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-8 bg-firma-dark text-center animate-fade-in relative overflow-hidden">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60vw] h-[60vw] bg-firma-pink/20 rounded-full blur-[80px]"></div>
+        <h2 className="text-6xl font-syne font-extrabold text-white mb-6 relative z-10">Sent!</h2>
+        <p className="font-grotesk text-gray-400 mb-8 relative z-10">Your message is now on the wall.</p>
+        <button onClick={() => setSent(false)} className="px-8 py-4 bg-firma-pink text-white font-syne font-bold text-sm uppercase tracking-widest hover:bg-white hover:text-firma-pink transition-all relative z-10 rounded-lg">
+          Send Another
+        </button>
       </div>
-    </div>
-  );
-}
+    );
+  }
+
+  return (
+    <div className="min-h-screen flex flex-col p-8 bg-firma-dark text-white relative overflow-hidden">
+      <div className="absolute top-[-100px] right-[-100px] w-[200px] h-[200px] bg-firma-pink rounded-full blur-[60px] opacity-40"></div>
+
+      <div className="flex-1 flex flex-col justify-center max-w-lg mx-auto w-full relative z-10">
+        
+        <header className="mb-10 text-center flex flex-col items-center">
+          {/* FIXED IMAGE SECTION */}
+          <div className="mb-8">
+             <img 
+               src="/WishesWall/logo.png"
+               alt="Event Logo" 
+               className="w-1/2 h-auto mb-8 mx-auto"
+               onError={(e) => { e.currentTarget.style.display = 'none'; }} 
+             />
+          </div>
+          
+          <h1 className="text-4xl md:text-5xl font-syne font-extrabold leading-none tracking-tight mb-2 uppercase">
+            Send a <span className="text-firma-pink">Wish.</span>
+          </h1>
+          <p className="text-sm font-grotesk text-gray-400 mt-2">
+            Leave a message for the birthday celebration.
+          </p>
+          
+          {!isConnected && (
+            <div className="mt-6 p-4 bg-gray-800 border-l-4 border-yellow-500 text-gray-300 text-xs font-mono rounded-r-lg text-left">
+              <strong className="text-yellow-500 block mb-1">⚠ Offline Mode</strong>
+              Messages will only be saved on this device. Scan the QR code on the main screen to connect to the live wall.
+            </div>
+          )}
+        </header>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="relative group">
+            <textarea
+              value={text}
+              onChange={(e) => setText(e.target.value.slice(0, 50))}
+              placeholder="Write your message..."
+              dir="auto"
+              className="w-full h-32 bg-transparent border-2 border-gray-700 focus:border-firma-pink p-4 text-2xl font-syne font-bold text-white placeholder-gray-700 focus:outline-none transition-colors resize-none rounded-xl"
+            />
+            <div className="flex justify-
