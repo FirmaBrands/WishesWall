@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { saveMessage, setApiUrl, getApiUrl } from '../services/messageService';
+// We are removing the messageService import to allow us to customize the layout directly here.
 
 const GuestView: React.FC = () => {
   const [text, setText] = useState('');
@@ -7,32 +7,65 @@ const GuestView: React.FC = () => {
   const [isSending, setIsSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
+  
+  // ---------------------------------------------------------
+  // 🔴 IMPORTANT: PASTE YOUR GOOGLE SCRIPT URL BELOW
+  // ---------------------------------------------------------
+  const API_URL = "https://script.google.com/macros/s/AKfycby.../exec"; 
 
   useEffect(() => {
-    // Check for API URL in URL params (from QR code)
+    // This allows the QR code to set the URL automatically if you prefer
     const params = new URLSearchParams(window.location.search);
     const apiUrlFromQr = params.get('apiUrl');
-    
     if (apiUrlFromQr) {
-      setApiUrl(apiUrlFromQr);
-      // Clean URL so the user doesn't see the ugly token
+      // You can store this in a global state if you have one, 
+      // but for now, we will use the hardcoded API_URL as backup
       window.history.replaceState({}, '', window.location.pathname + '#/');
     }
-
-    setIsConnected(!!getApiUrl());
+    // We assume connected if we have the hardcoded URL
+    setIsConnected(!!API_URL); 
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!text.trim()) return;
-
+    
     setIsSending(true);
-    // Send both text and author
-    await saveMessage(text.trim(), author.trim() || undefined);
-    setIsSending(false);
-    setSent(true);
-    setText('');
-    setAuthor('');
+
+    try {
+      // --- HERE IS THE "WIDE CLOUD" LOGIC ---
+      const newMessage = {
+        id: crypto.randomUUID(),
+        text: text,
+        author: author || 'Guest',
+        timestamp: Date.now(),
+        // Visuals: This spreads it WIDE (2% to 98% of screen width)
+        x: Math.random() * 96 + 2, 
+        // Keep height somewhat centered so it doesn't get cut off (15% to 85%)
+        y: Math.random() * 70 + 15,
+        // Random Styles
+        color: ['#FF0055', '#008F7A', '#FFD700', '#FFFFFF'][Math.floor(Math.random() * 4)],
+        font: ['font-syne', 'font-grotesk', 'font-anton', 'font-marker'][Math.floor(Math.random() * 4)],
+        rotation: Math.random() * 20 - 10,
+        scale: 1,
+      };
+
+      await fetch(API_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'add', message: newMessage }),
+      });
+
+      setSent(true);
+      setText('');
+      setAuthor('');
+    } catch (error) {
+      console.error("Error sending", error);
+      alert("Could not send message. Check your internet connection.");
+    } finally {
+      setIsSending(false);
+    }
   };
 
   if (sent) {
@@ -55,7 +88,8 @@ const GuestView: React.FC = () => {
       <div className="flex-1 flex flex-col justify-center max-w-lg mx-auto w-full relative z-10">
         
         <header className="mb-10 text-center flex flex-col items-center">
-          {/* FIXED IMAGE SECTION */}
+          
+          {/* LOGO FIX: Uses the new 'public' folder location */}
           <div className="mb-8">
              <img 
                src="/WishesWall/logo.png"
@@ -74,8 +108,8 @@ const GuestView: React.FC = () => {
           
           {!isConnected && (
             <div className="mt-6 p-4 bg-gray-800 border-l-4 border-yellow-500 text-gray-300 text-xs font-mono rounded-r-lg text-left">
-              <strong className="text-yellow-500 block mb-1">⚠ Offline Mode</strong>
-              Messages will only be saved on this device. Scan the QR code on the main screen to connect to the live wall.
+              <strong className="text-yellow-500 block mb-1">⚠ Setup Needed</strong>
+              Please ensure the API_URL is pasted in the code, or scan the QR code from the main screen.
             </div>
           )}
         </header>
@@ -89,4 +123,30 @@ const GuestView: React.FC = () => {
               dir="auto"
               className="w-full h-32 bg-transparent border-2 border-gray-700 focus:border-firma-pink p-4 text-2xl font-syne font-bold text-white placeholder-gray-700 focus:outline-none transition-colors resize-none rounded-xl"
             />
-            <div className="flex justify-
+            <div className="flex justify-between mt-2 px-1">
+               <span className="text-xs font-mono text-gray-600 uppercase">Max 50 chars</span>
+               <span className={`text-xs font-mono ${text.length >= 45 ? 'text-firma-pink' : 'text-gray-600'}`}>{text.length} / 50</span>
+            </div>
+          </div>
+
+          <div className="relative">
+             <input
+                type="text"
+                value={author}
+                onChange={(e) => setAuthor(e.target.value.slice(0, 20))}
+                placeholder="From: (Optional)"
+                dir="auto"
+                className="w-full bg-transparent border-2 border-gray-700 focus:border-firma-pink p-4 text-lg font-grotesk text-white placeholder-gray-700 focus:outline-none transition-colors rounded-xl"
+             />
+          </div>
+
+          <button type="submit" disabled={!text || isSending} className="w-full py-5 mt-4 bg-white text-black font-syne font-black text-lg uppercase tracking-widest hover:bg-firma-pink hover:text-white disabled:opacity-30 disabled:hover:bg-white disabled:hover:text-black transition-all rounded-xl shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:shadow-[0_0_30px_rgba(255,0,85,0.4)]">
+            {isSending ? 'Sending...' : 'Send Wish'}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+export default GuestView;
