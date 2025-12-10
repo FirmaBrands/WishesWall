@@ -1,3 +1,4 @@
+import logoImage from '../logo.png'; // (Adjust path to match where your file is)
 import React, { useState, useEffect } from 'react';
 import { saveMessage, setApiUrl, getApiUrl } from '../services/messageService';
 
