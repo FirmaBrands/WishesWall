@@ -1,0 +1,5 @@
+{
+  "name": "21st Birthday Live Wall",
+  "description": "A dual-experience web app: Guests send wishes via mobile, and a projection screen displays them in a lively, animated word cloud. Features AI-assisted wish generation.",
+  "requestFramePermissions": []
+}
