@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-// We are removing the messageService import to allow us to customize the layout directly here.
+import { saveMessage, setApiUrl, getApiUrl } from '../services/messageService';
 
 const GuestView: React.FC = () => {
   const [text, setText] = useState('');
@@ -7,65 +7,30 @@ const GuestView: React.FC = () => {
   const [isSending, setIsSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
-  
-  // ---------------------------------------------------------
-  // 🔴 IMPORTANT: PASTE YOUR GOOGLE SCRIPT URL BELOW
-  // ---------------------------------------------------------
-  const API_URL = "https://script.google.com/macros/s/AKfycby.../exec"; 
 
   useEffect(() => {
-    // This allows the QR code to set the URL automatically if you prefer
+    // Check for API URL in URL params
     const params = new URLSearchParams(window.location.search);
     const apiUrlFromQr = params.get('apiUrl');
+    
     if (apiUrlFromQr) {
-      // You can store this in a global state if you have one, 
-      // but for now, we will use the hardcoded API_URL as backup
+      setApiUrl(apiUrlFromQr);
       window.history.replaceState({}, '', window.location.pathname + '#/');
     }
-    // We assume connected if we have the hardcoded URL
-    setIsConnected(!!API_URL); 
+
+    setIsConnected(!!getApiUrl());
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!text.trim()) return;
-    
+
     setIsSending(true);
-
-    try {
-      // --- HERE IS THE "WIDE CLOUD" LOGIC ---
-      const newMessage = {
-        id: crypto.randomUUID(),
-        text: text,
-        author: author || 'Guest',
-        timestamp: Date.now(),
-        // Visuals: This spreads it WIDE (2% to 98% of screen width)
-        x: Math.random() * 96 + 2, 
-        // Keep height somewhat centered so it doesn't get cut off (15% to 85%)
-        y: Math.random() * 70 + 15,
-        // Random Styles
-        color: ['#FF0055', '#008F7A', '#FFD700', '#FFFFFF'][Math.floor(Math.random() * 4)],
-        font: ['font-syne', 'font-grotesk', 'font-anton', 'font-marker'][Math.floor(Math.random() * 4)],
-        rotation: Math.random() * 20 - 10,
-        scale: 1,
-      };
-
-      await fetch(API_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'add', message: newMessage }),
-      });
-
-      setSent(true);
-      setText('');
-      setAuthor('');
-    } catch (error) {
-      console.error("Error sending", error);
-      alert("Could not send message. Check your internet connection.");
-    } finally {
-      setIsSending(false);
-    }
+    await saveMessage(text.trim(), author.trim() || undefined);
+    setIsSending(false);
+    setSent(true);
+    setText('');
+    setAuthor('');
   };
 
   if (sent) {
@@ -89,7 +54,8 @@ const GuestView: React.FC = () => {
         
         <header className="mb-10 text-center flex flex-col items-center">
           
-          {/* LOGO FIX: Uses the new 'public' folder location */}
+          {/* --- FIXED LOGO SECTION --- */}
+          {/* This now looks for the file in your 'public' folder */}
           <div className="mb-8">
              <img 
                src="/WishesWall/logo.png"
@@ -98,6 +64,7 @@ const GuestView: React.FC = () => {
                onError={(e) => { e.currentTarget.style.display = 'none'; }} 
              />
           </div>
+          {/* --------------------------- */}
           
           <h1 className="text-4xl md:text-5xl font-syne font-extrabold leading-none tracking-tight mb-2 uppercase">
             Send a <span className="text-firma-pink">Wish.</span>
@@ -108,8 +75,8 @@ const GuestView: React.FC = () => {
           
           {!isConnected && (
             <div className="mt-6 p-4 bg-gray-800 border-l-4 border-yellow-500 text-gray-300 text-xs font-mono rounded-r-lg text-left">
-              <strong className="text-yellow-500 block mb-1">⚠ Setup Needed</strong>
-              Please ensure the API_URL is pasted in the code, or scan the QR code from the main screen.
+              <strong className="text-yellow-500 block mb-1">⚠ Offline Mode</strong>
+              Messages will only be saved on this device. Scan the QR code on the main screen to connect to the live wall.
             </div>
           )}
         </header>
