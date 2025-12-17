@@ -410,9 +410,6 @@ const DisplayView: React.FC = () => {
 
             {/* Actions */}
             <div className="pt-4 border-t border-gray-700 space-y-2">
-               <button onClick={handleReset} className="w-full py-2 bg-gray-800/50 hover:bg-red-900/50 text-red-400 hover:text-red-200 transition-colors border border-transparent hover:border-red-900/50">
-                 Clear Messages
-               </button>
                <button onClick={handleDisconnect} className="w-full py-2 text-gray-500 hover:text-white transition-colors text-xs">
                  Disconnect Sheet
                </button>
