@@ -203,12 +203,17 @@ const DisplayView: React.FC = () => {
       updatedList.push(fullMsg);
 
       if (!bodiesRef.current.has(msg.id)) {
-        const angle = Math.random() * Math.PI * 2;
-        const dist = 50 + Math.random() * 100;
+        // More random distribution across the entire viewport
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        const padding = 100;
+        const randomX = (Math.random() - 0.5) * (viewportWidth - padding * 2);
+        const randomY = (Math.random() - 0.5) * (viewportHeight - padding * 2);
+        
         bodiesRef.current.set(msg.id, {
           id: msg.id,
-          x: Math.cos(angle) * dist,
-          y: Math.sin(angle) * dist,
+          x: randomX,
+          y: randomY,
           vx: (Math.random() - 0.5) * 0.5,
           vy: (Math.random() - 0.5) * 0.5,
           radius: 100,

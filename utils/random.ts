@@ -17,41 +17,63 @@ export const getRandomColor = () => {
 };
 
 // --- Font Management ---
+// Store font info as objects with fontFamily and CSS properties
 
-const fontList = [
+interface FontConfig {
+  fontFamily: string;
+  fontWeight?: string | number;
+  fontStyle?: string;
+  textTransform?: string;
+  letterSpacing?: string;
+  fallback?: 'sans-serif' | 'serif' | 'cursive';
+}
+
+const fontList: FontConfig[] = [
   // Expressive / Display
-  'font-syne font-extrabold', 
-  'font-anton uppercase tracking-wider', 
-  'font-marker tracking-widest', 
-  'font-playfair italic font-bold',
-  'font-bebas tracking-wide text-gray-200',
-  'font-amatic font-bold text-2xl', // Increased size for visibility
-  'font-secular',
+  { fontFamily: 'Syne', fontWeight: 800 },
+  { fontFamily: 'Anton', textTransform: 'uppercase', letterSpacing: '0.1em' },
+  { fontFamily: 'Permanent Marker', letterSpacing: '0.15em', fallback: 'cursive' },
+  { fontFamily: 'Playfair Display', fontStyle: 'italic', fontWeight: 700, fallback: 'serif' },
+  { fontFamily: 'Bebas Neue', letterSpacing: '0.05em' },
+  { fontFamily: 'Amatic SC', fontWeight: 700, fallback: 'cursive' },
+  { fontFamily: 'Secular One' },
 
   // Modern / Clean
-  'font-grotesk font-light',
-  'font-inter font-black tracking-tighter',
-  'font-montserrat font-black uppercase',
-  'font-oswald uppercase font-bold',
-  'font-raleway font-bold',
-  'font-lato font-bold italic',
-  'font-roboto font-black',
-  'font-opensans font-extrabold',
+  { fontFamily: 'Space Grotesk', fontWeight: 300 },
+  { fontFamily: 'Inter', fontWeight: 900, letterSpacing: '-0.02em' },
+  { fontFamily: 'Montserrat', fontWeight: 900, textTransform: 'uppercase' },
+  { fontFamily: 'Oswald', textTransform: 'uppercase', fontWeight: 700 },
+  { fontFamily: 'Raleway', fontWeight: 700 },
+  { fontFamily: 'Lato', fontWeight: 700, fontStyle: 'italic' },
+  { fontFamily: 'Roboto', fontWeight: 900 },
+  { fontFamily: 'Open Sans', fontWeight: 800 },
   
   // Serif / Classic
-  'font-serif italic',   
-  'font-merriweather font-bold',
-  'font-frank font-bold',
+  { fontFamily: 'DM Serif Display', fontStyle: 'italic', fallback: 'serif' },
+  { fontFamily: 'Merriweather', fontWeight: 700, fallback: 'serif' },
+  { fontFamily: 'Frank Ruhl Libre', fontWeight: 700, fallback: 'serif' },
 
   // Soft / Rounded
-  'font-varela',
-  'font-rubik font-bold',
-  'font-heebo font-black',
-  'font-assistant font-extrabold',
+  { fontFamily: 'Varela Round' },
+  { fontFamily: 'Rubik', fontWeight: 700 },
+  { fontFamily: 'Heebo', fontWeight: 900 },
+  { fontFamily: 'Assistant', fontWeight: 800 },
+  
+  // Additional Variety Fonts
+  { fontFamily: 'Poppins', fontWeight: 900, textTransform: 'uppercase' },
+  { fontFamily: 'Nunito', fontWeight: 700 },
+  { fontFamily: 'Comfortaa', fontWeight: 700 },
+  { fontFamily: 'Righteous', letterSpacing: '0.05em' },
+  { fontFamily: 'Lobster', fallback: 'cursive' },
+  { fontFamily: 'Pacifico', fallback: 'cursive' },
+  { fontFamily: 'Dancing Script', fontWeight: 700, fallback: 'cursive' },
+  { fontFamily: 'Fredoka One', fallback: 'cursive' },
+  { fontFamily: 'Kalam', fontWeight: 700 },
+  { fontFamily: 'Satisfy', fallback: 'cursive' },
 ];
 
 // Fisher-Yates shuffle
-const shuffleArray = (array: string[]) => {
+const shuffleArray = <T,>(array: T[]): T[] => {
   const newArray = [...array];
   for (let i = newArray.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -61,10 +83,10 @@ const shuffleArray = (array: string[]) => {
 };
 
 // Stateful font tracking
-let availableFonts: string[] = [];
+let availableFonts: FontConfig[] = [];
 let currentFontIndex = 0;
 
-export const getRandomFont = () => {
+export const getRandomFont = (): string => {
   // Initialize or Reset loop
   if (availableFonts.length === 0 || currentFontIndex >= availableFonts.length) {
     availableFonts = shuffleArray(fontList);
@@ -73,7 +95,21 @@ export const getRandomFont = () => {
 
   const font = availableFonts[currentFontIndex];
   currentFontIndex++;
-  return font;
+  // Return as JSON string to store in Message.font
+  return JSON.stringify(font);
+};
+
+// Helper to parse font config from string
+export const parseFontConfig = (fontString?: string): FontConfig => {
+  if (!fontString) {
+    return { fontFamily: 'Syne', fontWeight: 800 };
+  }
+  try {
+    return JSON.parse(fontString);
+  } catch {
+    // Fallback for old format or invalid JSON
+    return { fontFamily: 'Syne', fontWeight: 800 };
+  }
 };
 
 // --- Other Randoms ---

@@ -225,6 +225,21 @@ const GuestView: React.FC = () => {
 
         </form>
 
+        {/* Open Wall Button */}
+        <div className="mt-8 w-full">
+          <a 
+            href="#/display"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group flex items-center justify-center gap-3 bg-white hover:bg-gray-200 text-black px-6 py-4 font-mono text-xs font-bold uppercase tracking-widest shadow-lg transition-all border border-transparent rounded-xl"
+          >
+            <span>Open Wall</span>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 group-hover:translate-x-1 transition-transform">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+            </svg>
+          </a>
+        </div>
+
       </div>
 
     </div>

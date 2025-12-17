@@ -1,5 +1,6 @@
 import React, { useEffect, useState, forwardRef } from 'react';
 import { Message } from '../types';
+import { parseFontConfig } from '../utils/random';
 
 export type LineMode = 'compact' | 'full';
 
@@ -38,6 +39,9 @@ const FloatingMessage = forwardRef<HTMLDivElement, FloatingMessageProps>(({
     return () => clearInterval(interval);
   }, [message.text]);
 
+  // Parse font config
+  const fontConfig = parseFontConfig(message.font);
+  
   // Dynamic Styles based on Line Mode
   const containerStyle: React.CSSProperties = {
     maxWidth: lineMode === 'full' ? '90vw' : '25em', // Compact: wider to allow ~2-3 words/line. Full: almost screen width.
@@ -53,6 +57,12 @@ const FloatingMessage = forwardRef<HTMLDivElement, FloatingMessageProps>(({
     // In compact mode, we ensure it doesn't get TOO wide if it's a paragraph
     maxWidth: lineMode === 'full' ? 'none' : '30vw', 
     minWidth: lineMode === 'full' ? 'auto' : '200px', // Prevent squashing to 1 word
+    // Apply font styles directly with appropriate fallback
+    fontFamily: `'${fontConfig.fontFamily}', ${fontConfig.fallback || 'sans-serif'}`,
+    fontWeight: fontConfig.fontWeight,
+    fontStyle: fontConfig.fontStyle,
+    textTransform: fontConfig.textTransform,
+    letterSpacing: fontConfig.letterSpacing,
   };
 
   return (
@@ -66,7 +76,7 @@ const FloatingMessage = forwardRef<HTMLDivElement, FloatingMessageProps>(({
       }}
     >
       <div 
-        className={`${message.font || 'font-syne'} ${message.color || 'text-white'}`}
+        className={message.color || 'text-white'}
         style={containerStyle}
       >
         <div 
